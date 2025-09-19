@@ -1,0 +1,73 @@
+<script>
+const API_KEY = "6129320016321095d4d180d77c1c71ca"; 
+
+function showSection(id) {
+  document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function fetchWeather(lat, lon) {
+  const weatherCard = document.getElementById("weatherCard");
+  const forecastContainer = document.getElementById("forecast");
+
+  // Current Weather
+  const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric`;
+  fetch(url)
+    .then(res => res.json())
+    .then(data => {
+      weatherCard.innerHTML = `
+        <h3>${data.name}</h3>
+        <div class="temp">${data.main.temp.toFixed(2)}°C</div>
+        <p>${data.weather[0].description}</p>
+        <img src="https://openweathermap.org/img/wn/${data.weather[0].icon}@2x.png" />
+      `;
+    });
+
+  // Forecast (5 days)
+  const forecastURL = `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric`;
+  fetch(forecastURL)
+    .then(res => res.json())
+    .then(data => {
+      const dailyData = getDailyForecast(data.list);
+      forecastContainer.innerHTML = "<h3>5-Day Forecast</h3>";
+      dailyData.forEach(day => {
+        forecastContainer.innerHTML += `
+          <div style="display:inline-block; margin:10px; padding:10px; background:#fff; border-radius:8px;">
+            <strong>${day.day}</strong><br>
+            ${day.temp}°C<br>
+            ${day.desc}<br>
+            <img src="https://openweathermap.org/img/wn/${day.icon}@2x.png" />
+          </div>
+        `;
+      });
+    });
+}
+
+// Get 5 daily entries from 3-hour forecast list
+function getDailyForecast(list) {
+  const days = {};
+  list.forEach(item => {
+    const date = new Date(item.dt_txt);
+    const dayName = date.toLocaleDateString(undefined, { weekday: 'long' });
+    if (!days[dayName]) {
+      days[dayName] = {
+        day: dayName,
+        temp: item.main.temp.toFixed(1),
+        desc: item.weather[0].description,
+        icon: item.weather[0].icon
+      };
+    }
+  });
+  return Object.values(days).slice(0, 5);
+}
+
+if ("geolocation" in navigator) {
+  navigator.geolocation.getCurrentPosition(pos => {
+    fetchWeather(pos.coords.latitude, pos.coords.longitude);
+  }, () => {
+    document.getElementById("weatherCard").innerText = "Location access denied.";
+  });
+} else {
+  document.getElementById("weatherCard").innerText = "Geolocation not supported.";
+}
+</script>

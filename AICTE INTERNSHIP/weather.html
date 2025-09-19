@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Dynamic Weather Dashboard</title>
+  <style>
+    body { font-family: Arial, sans-serif; text-align:center; background:#eef; }
+    #weather { margin-top:50px; padding:20px; border-radius:10px; background:white; display:inline-block; box-shadow:0 2px 6px rgba(0,0,0,0.2); }
+    .temp { font-size:2rem; font-weight:bold; }
+  </style>
+</head>
+<body>
+  <h1>Dynamic Weather Dashboard</h1>
+  <div id="weather">Loading weather...</div>
+
+  <script>
+    const API_KEY = "6129320016321095d4d180d77c1c71ca"; 
+
+    function fetchWeather(lat, lon) {
+      const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric`;
+      fetch(url)
+        .then(res => res.json())
+        .then(data => {
+          const div = document.getElementById("weather");
+          div.innerHTML = `
+            <h2>${data.name}</h2>
+            <div class="temp">${data.main.temp}°C</div>
+            <p>${data.weather[0].description}</p>
+            <img src="https://openweathermap.org/img/wn/${data.weather[0].icon}@2x.png" />
+          `;
+        })
+        .catch(err => {
+          document.getElementById("weather").innerText = "Error fetching weather.";
+          console.error(err);
+        });
+    }
+
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(pos => {
+        fetchWeather(pos.coords.latitude, pos.coords.longitude);
+      }, err => {
+        document.getElementById("weather").innerText = "Geolocation denied.";
+      });
+    } else {
+      document.getElementById("weather").innerText = "Geolocation not supported.";
+    }
+  </script>
+</body>
+</html>
